@@ -1,0 +1,13 @@
+services:
+  receipt-tracker:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - receipt-data:/app/data
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    restart: unless-stopped
+
+volumes:
+  receipt-data:

@@ -1,36 +1,154 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 電子帳單系統 (Receipt Tracker)
 
-## Getting Started
+跨裝置同步的 AI 收據辨識電子帳單系統，支援手機與電腦即時連動。
 
-First, run the development server:
+## 功能
+
+- **AI 收據辨識**：上傳收據圖片，自動提取金額、商家、日期、分類
+- **多幣別支援**：HKD（預設）、TWD、USD、JPY
+- **收據圖片附加**：每筆記錄自動保存並顯示原始收據圖片
+- **Excel 匯出**：匯出 `.xlsx` 檔案，內含金額資料與嵌入的收據圖片
+- **跨裝置同步**：部署至伺服器後，手機與電腦開啟同一網址即可同步
+- **PWA 支援**：可將網頁加入手機主畫面，像 App 一樣使用
+
+## 快速開始
+
+### 1. 安裝依賴
+
+```bash
+cd receipt-tracker
+npm install
+```
+
+### 2. 設定 AI 辨識（選填）
+
+複製環境變數範例並填入 OpenAI API Key：
+
+```bash
+cp .env.example .env.local
+```
+
+編輯 `.env.local`：
+
+```
+OPENAI_API_KEY=sk-your-api-key-here
+```
+
+> 若未設定 API Key，仍可手動填寫收據資訊。
+
+### 3. 啟動開發伺服器
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+開啟 [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 4. 手機連動（同一 Wi-Fi）
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+在電腦上查看本機 IP，例如 `192.168.1.100`，手機瀏覽器開啟：
 
-## Learn More
+```
+http://192.168.1.100:3000
+```
 
-To learn more about Next.js, take a look at the following resources:
+兩台裝置將共用同一資料庫，即時同步。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 部署（正式環境）
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+部署至 VPS、Railway、Render 等平台後，手機與電腦只需開啟部署網址即可永久同步。
 
-## Deploy on Vercel
+```bash
+npm run build
+npm start
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+> 注意：需確保 `data/` 目錄有持久化儲存空間（volume），否則重啟後資料會遺失。
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 使用方式
+
+1. **上傳收據**：前往「上傳」頁面，拍照或選擇收據圖片
+2. **AI 辨識**：點擊「AI 自動辨識並儲存」，或選擇「手動填寫」
+3. **查看記錄**：在「記錄」頁面瀏覽、編輯或刪除
+4. **匯出**：在「匯出」頁面下載含圖片的 Excel 檔案
+
+## 技術架構
+
+- **前端**：Next.js 16 + React + Tailwind CSS
+- **資料庫**：SQLite（better-sqlite3）
+- **AI**：OpenAI GPT-4o-mini Vision
+- **匯出**：ExcelJS（嵌入收據圖片）
+
+## 資料儲存
+
+- 資料庫：`data/receipts.db`
+- 收據圖片：`data/uploads/`
+
+---
+
+## 常見問題
+
+### 手機能連上 Cursor 的 repository 嗎？
+
+**不能直接連。** Cursor 是電腦上的開發工具，手機無法像電腦一樣開啟 Cursor 專案或執行 Next.js。
+
+| 用途 | 手機怎麼做 |
+|------|-----------|
+| **日常使用（上傳收據、查帳）** | 開啟**已部署的網站網址**（見下方部署說明） |
+| **查看／修改程式碼** | 將專案 push 到 **GitHub**，用手機 GitHub App 查看 |
+| **iCloud 資料夾** | iPhone「檔案」App 可能看得到 iCloud 資料夾，但**無法執行網站** |
+
+重點：**上傳收據、同步資料 → 用部署後的網址**；**改程式 → 用 GitHub + Cursor（電腦）**。
+
+### 如何讓手機隨時隨地都能用？
+
+需要把網站**部署到網路上**，取得固定網址（例如 `https://your-app.railway.app`），手機用 Safari / Chrome 開啟即可上傳收據。
+
+> ⚠️ 此系統使用 SQLite + 本地圖片儲存，**不適用 Vercel**（無持久化硬碟）。請用下方有 Volume 的方案。
+
+#### 方案 A：Railway（推薦，有免費額度）
+
+1. 將專案 push 到 GitHub（你的帳號：`jackyfan0615-del`）
+2. 前往 [railway.app](https://railway.app) → New Project → Deploy from GitHub
+3. 選擇 `receipt-tracker` repository
+4. 在 Railway 後台新增 **Volume**，掛載路徑：`/app/data`
+5. 設定環境變數 `OPENAI_API_KEY`（選填）
+6. 部署完成後取得公開網址，手機 bookmark 或「加入主畫面」
+
+#### 方案 B：Docker（VPS 或本機）
+
+```bash
+docker compose up -d --build
+```
+
+資料會保存在 Docker volume，重啟不會遺失。
+
+#### 方案 C：同一 Wi-Fi 暫時使用（免部署）
+
+電腦執行 `npm run dev -- -H 0.0.0.0`，手機開 `http://<電腦IP>:3000`。  
+**限制**：電腦要開機、同一 Wi-Fi，離家後無法使用。
+
+### 手機上傳收據
+
+部署完成後：
+
+1. 手機瀏覽器開啟網站網址
+2. 點「上傳」→ 可**直接拍照**或從相簿選圖
+3. Safari：分享 → **加入主畫面**，之後像 App 一樣開啟
+
+### 推送到 GitHub（一次性設定）
+
+```bash
+cd receipt-tracker
+git add .
+git commit -m "Add receipt tracker with AI recognition and export"
+gh repo create receipt-tracker --public --source=. --push
+```
+
+若 repository 已存在，改用：
+
+```bash
+git remote add origin https://github.com/jackyfan0615-del/receipt-tracker.git
+git push -u origin main
+```
+
