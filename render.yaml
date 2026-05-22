@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: receipt-tracker
+    runtime: docker
+    plan: starter
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false
+    disk:
+      name: receipt-data
+      mountPath: /app/data
+      sizeGB: 1
