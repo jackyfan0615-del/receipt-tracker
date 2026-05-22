@@ -136,6 +136,45 @@ docker compose up -d --build
 2. 點「上傳」→ 可**直接拍照**或從相簿選圖
 3. Safari：分享 → **加入主畫面**，之後像 App 一樣開啟
 
+### Cursor 手機版：傳照片 → AI 自動記帳
+
+已內建 **Agent 上傳 API**，讓 Cursor 收到收據照片後自動記帳。
+
+#### 設定（一次性）
+
+`.env.local` 需包含：
+
+```
+RECEIPT_AGENT_API_KEY=你的密鑰
+RECEIPT_TRACKER_URL=http://localhost:3000   # 部署後改為公開網址
+OPENAI_API_KEY=sk-...                       # 選填，AI 辨識用
+```
+
+#### 使用方式
+
+在 **Cursor 手機版** 對話中：
+1. 傳送收據照片
+2. 說「幫我記帳」或「上傳這張收據」
+3. Cursor AI 會自動執行 `./scripts/agent-upload.sh` 並回報記帳結果
+
+專案已包含 `.cursor/rules/receipt-auto-upload.mdc` 規則，AI 會自動辨識收據並上傳。
+
+#### Agent API
+
+```
+POST /api/receipts/agent-upload
+Authorization: Bearer <RECEIPT_AGENT_API_KEY>
+Content-Type: multipart/form-data
+file: <收據圖片>
+```
+
+#### 手動測試
+
+```bash
+./scripts/agent-upload.sh /path/to/receipt.jpg --note "測試"
+```
+
+
 ### 推送到 GitHub（一次性設定）
 
 ```bash

@@ -1,0 +1,54 @@
+---
+description: 當用戶傳收據/發票/單據照片或要求記帳時，自動上傳至電子帳單系統
+alwaysApply: true
+---
+
+# Cursor 自動記帳規則
+
+當用戶在對話中：
+- 傳送收據、發票、帳單、單據照片
+- 說「幫我記帳」「上傳收據」「記錄這張單」等類似指令
+
+**你必須立即執行記帳，不要只描述做法。**
+
+## 執行步驟
+
+1. 確認收據圖片路徑（用戶附件、工作區檔案、或聊天中的圖片）
+2. 在 `receipt-tracker` 專案目錄執行：
+
+```bash
+./scripts/agent-upload.sh "<圖片路徑>" --note "Cursor 手機上傳"
+```
+
+3. 若用戶提供了金額/商家等資訊，加入對應參數：
+
+```bash
+./scripts/agent-upload.sh "<圖片路徑>" --manual --amount 128.5 --currency HKD --title "午餐" --merchant "某某餐廳"
+```
+
+4. 將腳本輸出的 `summary` 回覆給用戶（繁體中文）
+
+## 環境設定
+
+- API 端點：`RECEIPT_TRACKER_URL`（預設 `http://localhost:3000`，部署後改為公開網址）
+- API 金鑰：`RECEIPT_AGENT_API_KEY`（在 `.env.local`）
+- 若本機 dev server 未運行，先執行 `npm run dev -- -H 0.0.0.0`
+
+## 備用方式（腳本不可用時）
+
+```bash
+curl -X POST "$RECEIPT_TRACKER_URL/api/receipts/agent-upload" \
+  -H "Authorization: Bearer $RECEIPT_AGENT_API_KEY" \
+  -F "file=@<圖片路徑>" \
+  -F "notes=Cursor 手機上傳"
+```
+
+## 回覆格式
+
+成功時回覆：
+- 已記帳確認
+- 金額、貨幣、商家、日期
+- 記錄 ID
+- 提醒用戶可在「記錄」頁面查看
+
+失敗時說明原因並提供修復步驟（例如 dev server 未啟動、API key 未設定）。
